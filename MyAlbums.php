@@ -19,17 +19,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
 
 
 
-
-    $title = $_POST["title"];
-    $desc = $_POST['desc'];
     $userId = $_SESSION["id"];
-    $access = $_POST["accessibility"];
 
-    var_dump($title, $desc, $userId, $access);
+    foreach ($_POST['accessibility'] as $albumId => $accessibility) {
+        $updateAccessibilityStatement = $myPdo->prepare("UPDATE album SET Accessibility_Code = :accessibility WHERE Album_Id = :albumId AND Owner_Id = :userId");
+        $updateAccessibilityStatement->execute([':accessibility' => $accessibility, ':albumId' => $albumId, ':userId' => $userId]);
+    }
+}
 
-    $insertStatement = $myPdo->prepare("INSERT INTO album (Title, Description,Owner_Id, Accessibility_Code) VALUES (:Title, :Desc, :OID, :ACode)");
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['deleteBtn'])) {
+    $userId = $_SESSION["id"];
+    try {
+        $albumIdToDelete = $_POST['deleteBtn'];
 
-    $insertStatement->execute([':Title' => $title, ':Desc' => $desc, ':OID' => $userId, ':ACode' => $access]);
+        $deletePicturesStatement = $myPdo->prepare("DELETE FROM picture WHERE Album_Id = :albumId");
+        $deletePicturesStatement->execute([':albumId' => $albumIdToDelete]);
+
+        $deleteStatement = $myPdo->prepare("DELETE FROM album WHERE Album_Id = :albumId AND Owner_Id = :userId");
+        $deleteStatement->execute([':albumId' => $albumIdToDelete, ':userId' => $userId]);
+    } catch (PDOException $e) {
+        echo "Error deleting album: " . $e->getMessage();
+    }
 }
 
 session_start();
@@ -49,21 +59,38 @@ session_start();
             </tr>
 
             <?php
-            $sql = "SELECT a.Title AS Album_Title, a.Accessibility_Code, COUNT(p.Picture_Id) AS Picture_Count FROM album a LEFT JOIN picture p ON a.Album_Id = p.Album_Id WHERE
+            $sql = "SELECT a.Album_Id as Album_Id, a.Title AS Album_Title, a.Accessibility_Code, COUNT(p.Picture_Id) AS Picture_Count FROM album a LEFT JOIN picture p ON a.Album_Id = p.Album_Id WHERE
             a.Owner_Id = :OID GROUP BY a.Album_Id";
 
             $stmt = $myPdo->prepare($sql);
 
             $stmt->execute([':OID' => $_SESSION['id']]);
-            var_dump($stmt->fetch(PDO::FETCH_ASSOC));
+
+
+            $sqlAccessibility = "SELECT Accessibility_Code, Description FROM accessibility";
+            $stmtAccessibility = $myPdo->prepare($sqlAccessibility);
+            $stmtAccessibility->execute();
+            $accessibilityOptions = $stmtAccessibility->fetchAll(PDO::FETCH_ASSOC);
+
 
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 echo "<tr>";
 
                 echo "<td>" . $row['Album_Title'] . "</td>";
                 echo "<td>" . $row['Picture_Count'] . "</td>";
-                echo "<td>" . $row['Accessibility_Code'] . "</td>";
-                echo "<td>delete</td>";
+                echo "<td>";
+                echo "<select class='form-control' name='accessibility[{$row['Album_Id']}]''>";
+
+                foreach ($accessibilityOptions as $option) {
+                    $selected = ($row['Accessibility_Code'] == $option['Accessibility_Code']) ? 'selected' : '';
+                    echo "<option value='{$option['Accessibility_Code']}' {$selected}>{$option['Description']}</option>";
+                }
+
+                echo "</select>";
+                echo "</td>";
+                echo "<td>";
+                echo "<button type='submit' class='btn btn-danger' name='deleteBtn' value='{$row['Album_Id']}'>Delete</button>";
+                echo "</td>";
 
                 echo "</tr>";
             }
