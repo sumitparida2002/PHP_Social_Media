@@ -39,7 +39,7 @@ session_start();
     <h1>Create New Album Selection</h1>
     <p>Welcome <?php echo $_SESSION["name"] ?>! (not you? change user <a href="Logout.php">here</a>), the following are your current registrations</p>
 
-    <form action="AddAlbum.php" method="post">
+    <form action="MyAlbums.php" method="post">
         <table class="table">
             <tr>
                 <th>Title</th>
@@ -55,7 +55,7 @@ session_start();
             $stmt = $myPdo->prepare($sql);
 
             $stmt->execute([':OID' => $_SESSION['id']]);
-
+            var_dump($stmt->fetch(PDO::FETCH_ASSOC));
 
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 echo "<tr>";
