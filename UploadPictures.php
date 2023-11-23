@@ -37,7 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitBtn'])) {
         if ($_FILES['file']['error'][$key] == 0) {
 
             //upload Image
-            $destinationPath = __DIR__ . DIRECTORY_SEPARATOR . ORIGINAL_IMAGE_DESTINATION;
+            $destinationPath = ORIGINAL_IMAGE_DESTINATION . DIRECTORY_SEPARATOR . $_SESSION["id"] . DIRECTORY_SEPARATOR . $album;
 
 
             if (!file_exists($destinationPath)) {

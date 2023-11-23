@@ -28,7 +28,7 @@
                 <ul class="nav navbar-nav">
                     <li class="active"><a href="Welcome.php">Home</a></li>
                     <li><a href="MyFriends.php">My Friends</a></li>
-                    <li><a href="MyAlbums.php">My Albums Pictures</a></li>
+                    <li><a href="MyAlbums.php">My Albums</a></li>
                     <li><a href="MyPictures.php">My Pictures </a></li>
                     <li><a href="UploadPictures.php">Upload Pictures </a></li>
 

@@ -49,7 +49,7 @@ session_start();
     <h1>Create New Album Selection</h1>
     <p>Welcome <?php echo $_SESSION["name"] ?>! (not you? change user <a href="Logout.php">here</a>), the following are your current registrations</p>
 
-    <form action="MyAlbums.php" method="post">
+    <form action="MyAlbums.php" id="myForm" method="post">
         <table class="table">
             <tr>
                 <th>Title</th>
@@ -89,7 +89,8 @@ session_start();
                 echo "</select>";
                 echo "</td>";
                 echo "<td>";
-                echo "<button type='submit' class='btn btn-danger' name='deleteBtn' value='{$row['Album_Id']}'>Delete</button>";
+                echo "<button type='button' class='btn btn-danger' onclick='confirmDelete({$row['Album_Id']})'>Delete</button>";
+
                 echo "</td>";
 
                 echo "</tr>";
@@ -104,10 +105,21 @@ session_start();
 
 
         <input type="submit" class="btn btn-primary" name="submitBtn" id="submitBtn" value="Save Changes">
+        <input type="hidden" name="deleteBtn" id="deleteBtn" value="">
+
 
 
 
 
     </form>
 </div>
+<script>
+    function confirmDelete(albumId) {
+        var confirmDelete = confirm('Are you sure you want to delete this album?');
+        if (confirmDelete) {
+            document.getElementById('deleteBtn').value = albumId;
+            document.getElementById('myForm').submit();
+        }
+    }
+</script>
 <?php include('./common/footer.php'); ?>
