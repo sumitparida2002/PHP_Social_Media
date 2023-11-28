@@ -115,7 +115,8 @@ session_start();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 echo "<tr>";
 
-                echo "<td>" . $row['FriendName'] . "</td>";
+                echo "<td><a href='FriendPictures.php?friendId=" . $row['FriendId'] . "'>" . $row['FriendName'] . "</a></td>";
+
                 echo "<td>" . $row['SharedAlbumsCount'] . "</td>";
                 echo "<td><input type='checkbox' name='defriend[]' value='" . $row['FriendId'] . "'></td>";
 

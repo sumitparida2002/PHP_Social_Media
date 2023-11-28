@@ -76,7 +76,7 @@ session_start();
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 echo "<tr>";
 
-                echo "<td>" . $row['Album_Title'] . "</td>";
+                echo "<td><a href='MyPictures.php?albumId={$row['Album_Id']}'>{$row['Album_Title']}</a></td>";
                 echo "<td>" . $row['Picture_Count'] . "</td>";
                 echo "<td>";
                 echo "<select class='form-control' name='accessibility[{$row['Album_Id']}]''>";

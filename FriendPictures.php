@@ -14,6 +14,11 @@ try {
 }
 include("./common/header.php");
 
+$friendId = isset($_GET['friendId']) ? $_GET['friendId'] : (isset($_POST['friendId']) ? $_POST['friendId'] : null);
+
+
+
+
 $selectedImageId = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitComment'])) {
     $album = $_POST['album'];
@@ -29,11 +34,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitComment'])) {
     }
 }
 
-// $album = $_POST['album'];
+$album = $_POST['album'];
 
-$album = isset($_GET['albumId']) ? $_GET['albumId'] : (isset($_POST['album']) ? $_POST['album'] : null);
-
-
+// $album = isset($_GET['albumId']) ? $_GET['albumId'] : null;
 
 
 $selectedImageId = "";
@@ -46,46 +49,64 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitId'])) {
 ?>
 
 <div class="container">
-    <h1>My Pictures</h1>
+    <h1>Friend Pictures</h1>
 
 
 
-    <form method="post" action="MyPictures.php">
+    <form method="post" action="FriendPictures.php">
         <select class="form-control" style="margin-bottom: 8px;" id="album" name="album" onchange="triggerChange()">
 
             <?php
 
 
+            if (empty($friendId)) {
+                $sql = "SELECT a.Album_Id, a.Title FROM album a 
+    JOIN friendship f ON (a.Owner_Id = f.Friend_RequesterId OR a.Owner_Id = f.Friend_RequesteeId)
+    WHERE (f.Friend_RequesterId = :UID OR f.Friend_RequesteeId = :UID)
+    AND f.Status = 'Accepted' AND a.Owner_Id != :UID";
+                $stmt = $myPdo->prepare($sql);
 
-            $sql = "SELECT Album_Id, Title FROM album where Owner_Id=:OID";
 
-            $stmt = $myPdo->prepare($sql);
+                $stmt->execute([':UID' => $_SESSION['id']]);
+            } else {
+                $sql = "SELECT a.Album_Id, a.Title FROM album a 
+                JOIN friendship f ON (a.Owner_Id = f.Friend_RequesterId OR a.Owner_Id = f.Friend_RequesteeId)
+                WHERE ((f.Friend_RequesterId = :UID AND f.Friend_RequesteeId = :friendId) OR
+                       (f.Friend_RequesterId = :friendId AND f.Friend_RequesteeId = :UID))
+                AND f.Status = 'Accepted' AND a.Owner_Id = :friendId";
+
+                $stmt = $myPdo->prepare($sql);
 
 
-            $stmt->execute([':OID' => $_SESSION['id']]);
+
+                $stmt->execute([':UID' => $_SESSION['id'], ':friendId' => $friendId]);
+            }
+
+
+
+
 
 
 
 
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                // $selected = ($_POST["album"] == $row['Album_Id']) ? 'selected' : '';
-                $selected = ($album == $row['Album_Id']) ? 'selected' : '';
-
+                $selected = ($_POST["album"] == $row['Album_Id']) ? 'selected' : '';
                 echo "<option value='" . $row['Album_Id'] . "' $selected>" . $row['Title'] . "</option>";
             }
             ?>
         </select>
 
-
+        <input type="hidden" name="friendId" value="<?php echo $friendId; ?>">
         <input type="submit" hidden id="submitBtn">
     </form>
 
-    <form method="post" action="MyPictures.php">
+    <form method="post" action="FriendPictures.php">
         <div class="row" style='margin-top: 10px;'>
             <div class="col-md-9 my-2">
                 <div class="col-md-8 ">
                     <?php
                     if (!empty($album)) {
+                        // Fetch album details
                         $sql = "SELECT Album_Id, Title, Description FROM album where Album_Id=:AID";
                         $stmt = $myPdo->prepare($sql);
                         $stmt->execute([':AID' => $album]);
@@ -141,7 +162,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitId'])) {
     </form>
 
     <div class="col-md-3">
-        <p>Description:</p>
         <?php
         if (!empty($_POST["album"])) {
             $sql = "SELECT Album_Id, Title, Description FROM album where Album_Id=:AID";
@@ -156,13 +176,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitId'])) {
             echo "<div id='descriptionArea'>" . $row['Description'] . "</div>";
         }
         ?>
-        <hr>
 
-        <p>Comments:</p>
+
         <?php
         $sql = "SELECT c.Author_Id, u.Name, c.Comment_Text FROM comment c
-        JOIN user u ON c.Author_Id = u.UserId
-        WHERE c.Picture_Id = :PID";
+           JOIN user u ON c.Author_Id = u.UserId
+           WHERE c.Picture_Id = :PID";
         $stmt = $myPdo->prepare($sql);
         $stmt->execute([":PID" => $selectedImageId]);
         if ($stmt->rowCount() > 0) {
@@ -173,12 +192,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitId'])) {
 
 
                 echo "<p>$authorName:</strong> $commentText</p>";
+
+                echo "<hr>";
             }
             echo "</div>";
+        } else {
+            echo "<p>No comments yet.</p>";
         }
         ?>
 
-        <form action="MyPictures.php" method="post">
+        <form action="FriendPictures.php" method="post">
             <textarea class="form-control" name="comment" id="comment" rows="5" style="resize:none" placeholder="Leave a comment"></textarea>
 
             <input type="hidden" name="selectedImageId" id="selectedImageId" value="<?php echo $_POST['selectedImageId']  ?>" />
@@ -223,7 +246,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submitId'])) {
         min-width: 80px;
         margin-right: 10px;
         border: 3px solid transparent;
-
 
 
     }
